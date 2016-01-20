@@ -1,15 +1,43 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from HTMLParser import HTMLParser
 import urllib2
 import json
 import sys
 from xml.etree import ElementTree as ET
-from urllib import urlencode
+from urllib import urlencode, urlopen
 
 # Python2.5 初始化后会删除 sys.setdefaultencoding 这个方法，我们需要重新载入
 reload(sys)
 sys.setdefaultencoding('utf-8')
+
+
+class HandleHtml(HTMLParser):
+    def __init__(self):
+        self.data = []
+        self.is_find = False
+        self.zhanghao = ''
+        HTMLParser.__init__(self)
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'font':
+            for name, value in attrs:
+                if name == 'size' and value == '4':
+                    self.is_find = True
+
+    def handle_data(self, data):
+        if self.is_find:
+            self.zhanghao = data
+
+    def handle_endtag(self, tag):
+        if tag == 'font':
+            if self.zhanghao:
+                self.data.append(self.zhanghao)
+            self.zhanghao = ''
+            self.is_find = False
+
+    def get_result(self):
+        return self.data
 
 
 def find_zhanghao_url():
@@ -23,21 +51,10 @@ def find_zhanghao_url():
 
 
 def get_all_zhanghao(content):
-    username_keyword = u'迅雷共享账号'
-    password_keyword = u'密'
+    parser = HandleHtml()
+    parser.feed(content)
+    all_zhanghao = parser.get_result()
 
-    last_index = 0
-    all_zhanghao = []
-    while True:
-        username_index = content.find(username_keyword, last_index)
-        password_index = content.find(password_keyword, username_index)
-        end_index = content.find('<', password_index)
-        last_index = end_index
-        if username_index <= 0:
-            break
-        username = content[username_index+len(username_keyword):password_index]
-        password = content[password_index+len(password_keyword):end_index]
-        all_zhanghao.append((username, password))
     return all_zhanghao
 
 
@@ -49,13 +66,13 @@ def get_xlhy():
 
     items = []
     for zhanghao in all_zhanghao:
-        title = u'帐号:%s | 密码:%s' % (zhanghao[0], zhanghao[1])
-        arg = '%s,%s' % (zhanghao[0], zhanghao[1])
+        title = zhanghao
+        arg = zhanghao
         items.append({
-            'uid': zhanghao[0],
+            'uid': zhanghao,
             'title': title,
             'arg': arg,
-            'description': zhanghao[0],
+            'description': zhanghao,
             'icon': 'icon.jpg',
         })
     xml = generate_xml(items)
@@ -76,3 +93,4 @@ def generate_xml(items):
 
 if __name__ == '__main__':
     print get_xlhy()
+
