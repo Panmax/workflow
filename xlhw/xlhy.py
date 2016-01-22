@@ -26,7 +26,7 @@ class HandleHtml(HTMLParser):
                     self.is_find = True
 
     def handle_data(self, data):
-        if self.is_find:
+        if self.is_find and not (data.find('(') >= 0 and data.find(')') >= 0):
             self.zhanghao = data
 
     def handle_endtag(self, tag):
