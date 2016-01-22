@@ -26,12 +26,12 @@ class HandleHtml(HTMLParser):
                     self.is_find = True
 
     def handle_data(self, data):
-        if self.is_find and not (data.find('(') >= 0 and data.find(')') >= 0):
+        if self.is_find and not (data.find('(') >= 0 and data.find(')') >= 0 or data.find(u'点击查看') >= 0):
             self.zhanghao = data
 
     def handle_endtag(self, tag):
         if tag == 'font':
-            if self.zhanghao:
+            if self.zhanghao and len(self.zhanghao.strip()):
                 self.data.append(self.zhanghao)
             self.zhanghao = ''
             self.is_find = False
